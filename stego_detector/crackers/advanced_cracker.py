@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 import logging
 from scipy import stats
 from ..utils.image_data import ImageData
+from sklearn.cluster import DBSCAN
 
 
 class AdvancedCracker:
@@ -355,7 +356,6 @@ class AdvancedCracker:
             y_uniformity = 1.0 - np.std(y_dist) / np.mean(y_dist)
 
             # Analyze clustering
-            from sklearn.cluster import DBSCAN
 
             clustering = DBSCAN(eps=3, min_samples=2).fit(coords)
             n_clusters = len(set(clustering.labels_)) - (

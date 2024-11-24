@@ -35,23 +35,15 @@ class StegoCracker:
         logger = logging.getLogger("stego_cracker")
         logger.setLevel(logging.DEBUG)
 
-        # Create handlers
+        # Create console handler only - remove file handler
         console_handler = logging.StreamHandler()
-        log_file_path = "steganography-project/stego_detector/stego_analysis.log"
         
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
-        
-        file_handler = logging.FileHandler(log_file_path)
-
-        # Create formatters and add it to handlers
+        # Create formatter and add it to handler
         log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         console_handler.setFormatter(logging.Formatter(log_format))
-        file_handler.setFormatter(logging.Formatter(log_format))
 
-        # Add handlers to the logger
+        # Add handler to the logger
         logger.addHandler(console_handler)
-        logger.addHandler(file_handler)
 
         return logger
 
@@ -126,8 +118,6 @@ class StegoCracker:
             # Display results
             self._display_forensic_results(results)
 
-            # Save analysis artifacts (but don't force save)
-            # Let the CLI handle the save location
             return results
 
         except Exception as e:
@@ -320,7 +310,7 @@ class StegoCracker:
         # Use Downloads folder as default location
         downloads_dir = self._get_downloads_folder()
         output_dir = downloads_dir / "stego_analysis"
-        
+
         # Create directory if it doesn't exist
         output_dir.mkdir(parents=True, exist_ok=True)
 

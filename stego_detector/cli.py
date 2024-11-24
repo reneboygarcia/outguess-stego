@@ -464,22 +464,21 @@ class StegoDetectorCLI:
         )
         self.console.print(header)
 
-    def display_menu(self) -> None:
-        """Display main menu options"""
-        menu = Panel(
-            "[bold green]1.[/bold green] 🔍 Analyze new image\n"
-            "[bold green]2.[/bold green] 📄 View last results\n"
-            "[bold green]3.[/bold green] 💾 Save results\n"
-            "[bold green]4.[/bold green] 🚪 Exit",
-            title="[bold]Menu Options[/bold]",
-            style="bold white",
-        )
-        self.console.print(menu)
+    # def display_menu(self) -> None:
+    #     """Display main menu options"""
+    #     menu = Panel(
+    #         "[bold green]1.[/bold green] 🔍 Analyze new image\n"
+    #         "[bold green]2.[/bold green] 📄 View last results\n"
+    #         "[bold green]3.[/bold green] 💾 Save results\n"
+    #         "[bold green]4.[/bold green] 🚪 Exit",
+    #         title="[bold]Menu Options[/bold]",
+    #         style="bold white",
+    #     )
+    #     self.console.print(menu)
 
     def handle_navigation(self) -> int:
         """Handle menu navigation with improved back/exit handling"""
         while True:
-            self.display_menu()
             choice = questionary.select(
                 "Select an option:",
                 choices=[
@@ -566,9 +565,6 @@ class StegoDetectorCLI:
 
         if not output_path:
             output_path = default_path
-
-        # Create parent directories if they don't exist
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
         self.save_results(Path(output_path))
         return self.handle_navigation()
@@ -667,10 +663,11 @@ class StegoDetectorCLI:
             if not final_path:
                 return
 
-            # Create the parent directory if it doesn't exist
-            Path(final_path).parent.mkdir(parents=True, exist_ok=True)
+            # Create parent directory only if user has explicitly chosen a path
+            if final_path != output_path:
+                Path(final_path).parent.mkdir(parents=True, exist_ok=True)
 
-            # Use the cracker's write method to save the results
+            # Write results
             with open(final_path, "w") as f:
                 self.cracker._write_detailed_results(f, self.current_results)
 

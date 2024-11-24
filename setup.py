@@ -14,7 +14,7 @@ setup(
         "questionary>=2.0.1",
         "rich>=10.0.0",
         "reedsolo>=1.5.0",
-        "sklearn",
+        "scikit-learn==1.5.2",
     ],
     extras_require={
         'dev': [
