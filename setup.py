@@ -13,7 +13,8 @@ setup(
         "cryptography>=3.4.0",
         "questionary>=2.0.1",
         "rich>=10.0.0",
-        "reedsolo>=1.5.0"
+        "reedsolo>=1.5.0",
+        "sklearn",
     ],
     extras_require={
         'dev': [
@@ -25,8 +26,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'stego=steganography.cli:main',
-            'stego-detect=stego_detector.cli:main',
+            'sudo stego=steganography.cli:main',
+            'sudo stego-detect=stego_detector.cli:main',
         ],
     },
     author="eboygarcia",

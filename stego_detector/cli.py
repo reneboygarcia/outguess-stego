@@ -421,7 +421,7 @@ class StegoDetectorCLI:
         """Analyze an image file"""
         if not image_path.exists():
             self.console.print(
-                f"❌ Error: Image file not found: {image_path}", style="red"
+                f"❌ [red]Error: Image file not found: {image_path}[/red]"
             )
             return self.handle_navigation()
 
@@ -438,7 +438,7 @@ class StegoDetectorCLI:
 
                 if not self.current_results:
                     self.console.print(
-                        "[yellow]Analysis completed but no results were generated[/yellow]"
+                        "[yellow]⚠️ Analysis completed but no results were generated[/yellow]"
                     )
                     return self.handle_navigation()
 
@@ -452,7 +452,7 @@ class StegoDetectorCLI:
 
         except Exception as e:
             self.logger.error(f"Analysis failed: {str(e)}")
-            self.console.print(f"❌ Error during analysis: {str(e)}", style="red")
+            self.console.print(f"❌ [red]Error during analysis: {str(e)}[/red]")
             return self.handle_navigation()
 
     def display_header(self) -> None:
@@ -467,10 +467,10 @@ class StegoDetectorCLI:
     def display_menu(self) -> None:
         """Display main menu options"""
         menu = Panel(
-            "[bold green]1.[/bold green] Analyze new image\n"
-            "[bold green]2.[/bold green] View last results\n"
-            "[bold green]3.[/bold green] Save results\n"
-            "[bold green]4.[/bold green] Exit",
+            "[bold green]1.[/bold green] 🔍 Analyze new image\n"
+            "[bold green]2.[/bold green] 📄 View last results\n"
+            "[bold green]3.[/bold green] 💾 Save results\n"
+            "[bold green]4.[/bold green] 🚪 Exit",
             title="[bold]Menu Options[/bold]",
             style="bold white",
         )
@@ -483,34 +483,34 @@ class StegoDetectorCLI:
             choice = questionary.select(
                 "Select an option:",
                 choices=[
-                    "Analyze new image",
-                    "View last results",
-                    "Save results",
-                    "Back to main menu",
-                    "Exit program",
+                    "🔍 Analyze new image",
+                    "📄 View last results",
+                    "💾 Save results",
+                    "↩ Back to main menu",
+                    "🚪 Exit program",
                 ],
             ).ask()
 
             match choice:
-                case "Analyze new image":
+                case "🔍 Analyze new image":
                     image_path = self._get_image_path()
                     if image_path:
                         return self.analyze_image(Path(image_path))
                     continue
 
-                case "View last results":
+                case "📄 View last results":
                     self.show_last_results()
                     continue
 
-                case "Save results":
+                case "💾 Save results":
                     self.save_results_prompt()
                     continue
 
-                case "Back to main menu":
+                case "↩ Back to main menu":
                     self._handle_back()
                     return self.run()
 
-                case "Exit program":
+                case "🚪 Exit program":
                     if self._confirm_exit():
                         self.console.print("👋 Goodbye!", style="yellow")
                         return 0
@@ -576,7 +576,7 @@ class StegoDetectorCLI:
     def display_results(self, results: Optional[dict]) -> None:
         """Display analysis results in a formatted table"""
         if not results:
-            self.console.print("[yellow]No results available to display[/yellow]")
+            self.console.print("[yellow]⚠️ No results available to display[/yellow]")
             return
 
         table = Table(title="Analysis Results", show_header=True)
@@ -651,7 +651,7 @@ class StegoDetectorCLI:
         except Exception as e:
             self.logger.error(f"Error displaying results: {str(e)}")
             self.console.print(
-                "[red]Error displaying results. See logs for details.[/red]"
+                "[red]❌ Error displaying results. See logs for details.[/red]"
             )
 
     @handle_errors

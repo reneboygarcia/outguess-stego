@@ -17,20 +17,25 @@ from steganography.src.utils.logger_config import setup_logger
 logger = setup_logger(__name__)
 console = Console()
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 def handle_back_option(func: Callable[..., Optional[T]]) -> Callable[..., Optional[T]]:
     """Decorator to handle 'back' option in user inputs."""
+
     @wraps(func)
     def wrapper(*args, **kwargs) -> Optional[T]:
         result = func(*args, **kwargs)
-        if isinstance(result, str) and result.lower() == 'back':
+        if isinstance(result, str) and result.lower() == "back":
             return None
         return result
+
     return wrapper
+
 
 def handle_errors(func: Callable) -> Callable:
     """Decorator to handle exceptions in command execution."""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -39,7 +44,9 @@ def handle_errors(func: Callable) -> Callable:
             logger.error(f"{func.__name__} failed: {e}")
             console.print(f"❌ Error: {str(e)}", style="red")
             sys.exit(1)
+
     return wrapper
+
 
 class SteganographyCLI:
     """Command Line Interface for steganography operations."""
@@ -67,57 +74,111 @@ class SteganographyCLI:
 
     def _add_encode_parser(self, subparsers):
         """Add encode command parser."""
-        encode_parser = subparsers.add_parser("encode", help="Hide a message in an image")
-        encode_parser.add_argument("-i", "--input", required=True, help="Path to input image")
-        encode_parser.add_argument("-o", "--output", required=True, help="Path to output image")
+        encode_parser = subparsers.add_parser(
+            "encode", help="Hide a message in an image"
+        )
+        encode_parser.add_argument(
+            "-i", "--input", required=True, help="Path to input image"
+        )
+        encode_parser.add_argument(
+            "-o", "--output", required=True, help="Path to output image"
+        )
         encode_parser.add_argument("-m", "--message", help="Message to hide")
-        encode_parser.add_argument("-f", "--message-file", help="File containing message to hide")
-        encode_parser.add_argument("-p", "--password", required=True, help="Password for encryption")
-        encode_parser.add_argument("--method", choices=["lsb", "outguess"], required=True, help="Steganography method to use")
+        encode_parser.add_argument(
+            "-f", "--message-file", help="File containing message to hide"
+        )
+        encode_parser.add_argument(
+            "-p", "--password", required=True, help="Password for encryption"
+        )
+        encode_parser.add_argument(
+            "--method",
+            choices=["lsb", "outguess"],
+            required=True,
+            help="Steganography method to use",
+        )
 
     def _add_decode_parser(self, subparsers):
         """Add decode command parser."""
-        decode_parser = subparsers.add_parser("decode", help="Extract hidden message from an image")
-        decode_parser.add_argument("-i", "--input", required=True, help="Path to image with hidden message")
-        decode_parser.add_argument("-o", "--output", help="Path to save extracted message (optional)")
-        decode_parser.add_argument("-p", "--password", required=True, help="Password for decryption")
-        decode_parser.add_argument("--method", choices=["lsb", "outguess"], required=True, help="Steganography method to use")
+        decode_parser = subparsers.add_parser(
+            "decode", help="Extract hidden message from an image"
+        )
+        decode_parser.add_argument(
+            "-i", "--input", required=True, help="Path to image with hidden message"
+        )
+        decode_parser.add_argument(
+            "-o", "--output", 
+            required=False,  # Make sure this is False
+            default=None,    # Add explicit default
+            help="Path to save extracted message (optional)"
+        )
+        decode_parser.add_argument(
+            "-p", "--password", required=True, help="Password for decryption"
+        )
+        decode_parser.add_argument(
+            "--method",
+            choices=["lsb", "outguess"],
+            required=True,
+            help="Steganography method to use",
+        )
 
     def _guided_mode(self) -> argparse.Namespace:
         """Interactive guided mode for user input."""
-        console.print(Panel.fit("Welcome to the Steganography Tool!", title="🔒 Steganography Assistant"))
+        console.print(
+            Panel.fit(
+                "Welcome to the Steganography Tool!\nPress Ctrl+C at any time to exit",
+                title="🔒 Steganography Assistant"
+            )
+        )
 
         while True:
-            operation = self._select_operation()
-            if operation == "Exit program":
-                console.print("👋 Goodbye!", style="yellow")
-                sys.exit(0)
-
-            args = self._initialize_args(operation)
-
-            while True:
-                args.method = self._select_method()
-                if args.method == "Back to main menu":
-                    break
-
-                if not self._get_common_inputs(args):
+            try:
+                operation = self._select_operation()
+                if operation == "exit":
+                    console.print("👋 Goodbye!", style="yellow")
+                    sys.exit(0)
+                elif operation == "back":
                     continue
 
-                if args.command == "encode":
-                    if not self._handle_encode_specific_inputs(args):
-                        continue
-                else:  # Decode
-                    if not self._handle_decode_specific_inputs(args):
-                        continue
+                args = self._initialize_args(operation)
 
-                return args  # Return args if all inputs are valid
+                while True:
+                    args.method = self._select_method()
+                    if args.method == "back":
+                        break
+
+                    if self._get_common_inputs(args) and (
+                        (
+                            args.command == "encode"
+                            and self._handle_encode_specific_inputs(args)
+                        )
+                        or (
+                            args.command == "decode"
+                            and self._handle_decode_specific_inputs(args)
+                        )
+                    ):
+                        return args
+                    
+            except KeyboardInterrupt:
+                console.print("\n👋 Program terminated by user", style="yellow")
+                sys.exit(0)
 
     def _select_operation(self) -> str:
         """Select operation from the menu."""
-        return questionary.select(
+        choices = [
+            questionary.Choice("📝 Hide a message (encode)", "encode"),
+            questionary.Choice("🔍 Extract a message (decode)", "decode"),
+            questionary.Choice("⬅️  Back", "back"),
+            questionary.Choice("🚪 Exit program", "exit"),
+        ]
+        result = questionary.select(
             "What would you like to do?",
-            choices=["Hide a message (encode)", "Extract a message (decode)", "Exit program"],
+            choices=choices,
+            instruction="(Use ↑↓ arrows and Enter to select)"
         ).ask()
+
+        if result == "back":
+            return "back"
+        return result
 
     def _initialize_args(self, operation: str) -> argparse.Namespace:
         """Initialize command arguments based on selected operation."""
@@ -127,11 +188,20 @@ class SteganographyCLI:
 
     def _select_method(self) -> str:
         """Select steganography method."""
-        return questionary.select(
+        choices = [
+            questionary.Choice("🔐 LSB - Least Significant Bit", "lsb"),
+            questionary.Choice("⬅️  Back", "back"),
+        ]
+        result = questionary.select(
             "Select steganography method:",
-            choices=["lsb", "Back to main menu"],
+            choices=choices,
             default="lsb",
+            instruction="(Use ↑↓ arrows and Enter to select)"
         ).ask()
+
+        if result == "back":
+            return "back"
+        return result
 
     def _get_common_inputs(self, args: argparse.Namespace) -> bool:
         """Get common inputs for encoding/decoding."""
@@ -189,10 +259,20 @@ class SteganographyCLI:
 
     def _select_message_input_method(self) -> str:
         """Select method for inputting the message."""
-        return questionary.select(
+        choices = [
+            questionary.Choice("⌨️  Type directly", "type"),
+            questionary.Choice("📄 From a file", "file"),
+            questionary.Choice("⬅️  Back", "back"),
+        ]
+        result = questionary.select(
             "How would you like to input your message?",
-            choices=["Type directly", "From a file", "Back"],
+            choices=choices,
+            instruction="(Use ↑↓ arrows and Enter to select)"
         ).ask()
+
+        if result == "back":
+            return "back"
+        return result
 
     @handle_back_option
     def _get_direct_message(self) -> Optional[str]:
@@ -223,22 +303,28 @@ class SteganographyCLI:
 
     def _get_output_specification(self) -> Optional[str]:
         """Prompt for output specification."""
-        output_type = questionary.select(
+        choices = [
+            questionary.Choice("📁 Specify directory (auto-generate filename)", "directory"),
+            questionary.Choice("📝 Specify complete filename", "filename"),
+            questionary.Choice("⬅️  Back", "back"),
+        ]
+        result = questionary.select(
             "How would you like to specify the output?",
-            choices=["Specify directory (filename will be generated)", "Specify complete filename", "Back"],
+            choices=choices,
+            instruction="(Use ↑↓ arrows and Enter to select)"
         ).ask()
 
-        if output_type == "Back":
+        if result == "back":
             return None
 
-        if "directory" in output_type:
+        if result == "directory":
             return questionary.path(
-                "Enter the directory to save the message (or 'back' to return):",
+                "Enter the directory to save the message:",
                 only_directories=True,
             ).ask()
         else:
             return questionary.path(
-                "Enter the complete path for the output file (or 'back' to return):"
+                "Enter the complete path for the output file:"
             ).ask()
 
     def _validate_paths(self, input_path: str, output_path: str) -> tuple[Path, Path]:
@@ -289,7 +375,9 @@ class SteganographyCLI:
                 method=args.method,
             )
 
-        console.print(f"✅ Message successfully encoded to {output_path}", style="green")
+        console.print(
+            f"✅ Message successfully encoded to {output_path}", style="green"
+        )
 
     @handle_errors
     def decode(self, args) -> None:
@@ -306,10 +394,15 @@ class SteganographyCLI:
                 method=args.method,
             )
 
-        if args.output:
-            self._save_extracted_message(message, args.output)
+        # Initialize output as None if not provided in args
+        output_path = getattr(args, 'output', None)
+        
+        if output_path:
+            self._save_extracted_message(message, output_path)
         else:
-            console.print(Panel.fit(message, title="📝 Extracted Message", border_style="green"))
+            console.print(
+                Panel.fit(message, title="📝 Extracted Message", border_style="green")
+            )
 
     def _save_extracted_message(self, message: str, output_path: str) -> None:
         """Save the extracted message to a specified output path."""
@@ -330,10 +423,11 @@ class SteganographyCLI:
         try:
             args = self.parser.parse_args()
             args = self._handle_guided_mode(args)
-
-            self._execute_command(args)
+            if args:  # Only execute if we have valid args
+                self._execute_command(args)
         except KeyboardInterrupt:
-            self._handle_interruption()
+            console.print("\n👋 Program terminated by user", style="yellow")
+            sys.exit(0)
 
     def _handle_guided_mode(self, args) -> Optional[argparse.Namespace]:
         """Handle guided mode input."""
@@ -358,7 +452,7 @@ class SteganographyCLI:
 
     def _handle_interruption(self) -> None:
         """Handle keyboard interruption gracefully."""
-        console.print("\n👋 Operation cancelled by user", style="yellow")
+        console.print("\n👋 Program terminated by user", style="yellow")
         sys.exit(0)
 
 
@@ -368,7 +462,7 @@ def main():
         cli = SteganographyCLI()
         cli.run()
     except KeyboardInterrupt:
-        console.print("\n👋 Operation cancelled by user", style="yellow")
+        console.print("\n👋 Program terminated by user", style="yellow")
         sys.exit(0)
 
 

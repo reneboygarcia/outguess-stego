@@ -7,3 +7,4 @@ cryptography>=3.4.0  # Added for Fernet encryption/decryption
 questionary==2.0.1
 rich>=10.0.0
 reedsolo>=1.5.0
+sklearn

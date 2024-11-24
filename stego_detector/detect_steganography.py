@@ -2,7 +2,6 @@ import sys
 import os
 from pathlib import Path
 import numpy as np
-import matplotlib.pyplot as plt
 from typing import Dict, Tuple
 import logging
 from PIL import Image
@@ -38,9 +37,12 @@ class StegoCracker:
 
         # Create handlers
         console_handler = logging.StreamHandler()
-        file_handler = logging.FileHandler(
-            "steganography-project/stego_detector/stego_analysis.log"
-        )
+        log_file_path = "steganography-project/stego_detector/stego_analysis.log"
+        
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+        
+        file_handler = logging.FileHandler(log_file_path)
 
         # Create formatters and add it to handlers
         log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
